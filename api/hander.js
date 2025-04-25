@@ -129,15 +129,20 @@ export default async function handler(req, res) {
 
 try {
   const webhookTag = determineWebhookTag(name, luckMulti);
+  console.log("Determined webhook tag:", webhookTag);
+
   if (!webhookTag) return res.status(400).send("Unknown type or luck value");
 
   if (webhookTag === "AURA_EGG_PRIORITY") {
+    console.log("Sending priority webhooks...");
     await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
     await setTimeout(5000);
     await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
   } else if (webhookTag === "AURA_EGG") {
+    console.log("Sending normal Aura Egg webhook...");
     await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
   } else {
+    console.log("Sending other webhook:", TAG_WEBHOOKS[webhookTag]);
     await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
   }
 
@@ -146,7 +151,6 @@ try {
   console.error("Webhook error:", err);
   return res.status(500).send("Internal Server Error");
 }
-
 
 async function sendWebhook(url, payload) {
   const response = await fetch(url, {
