@@ -133,10 +133,9 @@ export default async function handler(req, res) {
 
     if (webhookTag === "AURA_EGG") {
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
-      await setTimeout(5000);
-      await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
-      await setTimeout(4000);
-      await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
+      await enqueueWebhook({ url: TAG_WEBHOOKS.AURA_EGG_P2, embed }, 3);
+      await enqueueWebhook({ url: TAG_WEBHOOKS.AURA_EGG, embed }, 7);
+
     } else {
       await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
     }
