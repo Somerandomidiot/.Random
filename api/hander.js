@@ -1,4 +1,4 @@
-import { setTimeout } from "timers/promises";
+const { setTimeout } = require("timers/promises");
 
 const AURA_TRACKER = new Map();
 const IP_REQUEST_COUNT = new Map();
