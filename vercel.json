@@ -6,7 +6,7 @@
   },
   "crons": [
     {
-      "path": "api/webhook-worker.js",
+      "path": "/api/webhook-worker",
       "schedule": "*/30 * * * * *"
     }
   ]
