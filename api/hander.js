@@ -1,3 +1,5 @@
+
+
 import { setTimeout } from "timers/promises";
 
 const AURA_TRACKER = new Map();
@@ -131,7 +133,7 @@ export default async function handler(req, res) {
 
     if (webhookTag === "AURA_EGG") {
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
-      await setTimeout(5000);
+      await setTimeout(4000);
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
       await setTimeout(3000);
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
