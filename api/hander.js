@@ -1,9 +1,14 @@
 
-import { setTimeout } from 'timers/promises';
+
+import { setTimeout } from "timers/promises";
+
+const AURA_TRACKER = new Map();
+const IP_REQUEST_COUNT = new Map();
+const BANNED_IPS = new Set();
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).send("Only GET allowed");
+    return res.status(405).send("Only POST allowed");
   }
 
   const {
@@ -29,12 +34,47 @@ export default async function handler(req, res) {
     return res.status(400).send("Invalid or missing query parameters.");
   }
 
-  const joinLink = `https://roblox-server-join.vercel.app/?placeId=${placeId}&jobId=${jobId}`;
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress;
+  const curTime = Math.floor(Date.now() / 1000);
   const expiresUnix = Math.floor(Number(expire));
+
+  if (expiresUnix < curTime - 660 || expiresUnix > curTime + 660) {
+    return res.status(400).send("Invalid expire time");
+  }
+
+  if (BANNED_IPS.has(ip)) {
+    return res.status(403).send("Your IP has been temporarily blocked");
+  }
+
+  const isAura = name.toLowerCase().includes("aura");
+  const jobKey = `${ip}_${jobId}`;
+
+  if (isAura) {
+    if (AURA_TRACKER.has(jobKey)) {
+      return res.status(429).send("This Aura egg has already been reported from your IP.");
+    }
+
+    AURA_TRACKER.set(jobKey, expiresUnix);
+
+    const count = IP_REQUEST_COUNT.get(ip) || 0;
+    if (count >= 5) {
+      BANNED_IPS.add(ip);
+      return res.status(403).send("Too many Aura reports. You have been banned.");
+    }
+    IP_REQUEST_COUNT.set(ip, count + 1);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  for (const [key, timestamp] of AURA_TRACKER) {
+    if (timestamp < now) {
+      AURA_TRACKER.delete(key);
+    }
+  }
+
+  const joinLink = `https://roblox-server-join.vercel.app/?placeId=${placeId}&jobId=${jobId}`;
   const expireRelative = `<t:${expiresUnix}:R>`;
   const luckMulti = Number(luck);
   const heightMeters = `${Number(height)} meters`;
-
   const AVATAR_URL = "https://cdn.discordapp.com/attachments/998210323368652924/1363189689871241617/db57affe3770d5677254769cb16220a2.png?ex=680520d4&is=6803cf54&hm=1075fd9cf79f6c382425b0b2cd5d98697e52817eb84edbb3e24aed3dec137f09&";
 
   const embed = {
@@ -120,15 +160,13 @@ function getDescription(name) {
   if (name.toLowerCase().includes("aura")) return "An Aura Egg Has Been Found!";
   if (name.toLowerCase().includes("royal")) return "A Royal Chest Has Been Found!";
   if (name.toLowerCase().includes("egg")) return `A(n) ${name} Has Been Found!`;
-  return "What the Fuck";
+  return "A Rare Object Has Been Found!";
 }
 
 function determineWebhookTag(name, luckMulti) {
   const lower = name.toLowerCase();
-
   if (lower.includes("royal")) return "ROYAL_CHEST";
   if (luckMulti === 25) return "X25EGG";
   if (lower.includes("aura")) return "AURA_EGG";
-
   return null;
 }
