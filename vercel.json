@@ -4,7 +4,7 @@
       "maxDuration": 25
     }
   },
-  "cron": [
+  "crons": [
     {
       "path": "api/webhook-worker.js",
       "schedule": "*/30 * * * * *"
