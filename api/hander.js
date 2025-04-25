@@ -127,25 +127,26 @@ export default async function handler(req, res) {
     X25EGG: process.env.X25EGG,
   };
 
-  try {
-    const webhookTag = determineWebhookTag(name, luckMulti);
-    if (!webhookTag) return res.status(400).send("Unknown type or luck value");
+try {
+  const webhookTag = determineWebhookTag(name, luckMulti);
+  if (!webhookTag) return res.status(400).send("Unknown type or luck value");
 
-    if (webhookTag === "AURA_EGG") {
-      await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
-      await enqueueWebhook({ url: TAG_WEBHOOKS.AURA_EGG_P2, embed }, 3);
-      await enqueueWebhook({ url: TAG_WEBHOOKS.AURA_EGG, embed }, 7);
-
-    } else {
-      await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
-    }
-
-    return res.status(200).send(`Webhook sent to: ${webhookTag}`);
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return res.status(500).send("Internal Server Error");
+  if (webhookTag === "AURA_EGG_PRIORITY") {
+    await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
+    await setTimeout(5000);
+    await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
+  } else if (webhookTag === "AURA_EGG") {
+    await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
+  } else {
+    await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
   }
+
+  return res.status(200).send(`Webhook sent to: ${webhookTag}`);
+} catch (err) {
+  console.error("Webhook error:", err);
+  return res.status(500).send("Internal Server Error");
 }
+
 
 async function sendWebhook(url, payload) {
   const response = await fetch(url, {
@@ -166,10 +167,14 @@ function getDescription(name) {
   return "A Rare Object Has Been Found!";
 }
 
-function determineWebhookTag(name, luckMulti) {
+function determineWebhookTag(name) {
   const lower = name.toLowerCase();
+
+  if (lower === "auraeggp") return "AURA_EGG_PRIORITY";
+  if (lower === "auraegg") return "AURA_EGG";
   if (lower.includes("royal")) return "ROYAL_CHEST";
-  if (luckMulti === 25) return "X25EGG";
-  if (lower.includes("aura")) return "AURA_EGG";
+  if (lower.includes("egg") && name.includes("25")) return "X25EGG";
+
   return null;
 }
+
