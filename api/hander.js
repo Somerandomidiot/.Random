@@ -1,5 +1,3 @@
-
-
 import { setTimeout } from "timers/promises";
 
 const AURA_TRACKER = new Map();
@@ -18,6 +16,8 @@ export default async function handler(req, res) {
     placeId,
     jobId,
     height,
+    Players,
+    MaxPlayers,
   } = req.query;
 
   const isValidNumber = (val) => !isNaN(Number(val));
@@ -29,7 +29,9 @@ export default async function handler(req, res) {
     !isValidNumber(luck) ||
     !isValidNumber(placeId) ||
     !isValidString(jobId) ||
-    !isValidNumber(height)
+    !isValidNumber(height) ||
+    !isValidNumber(players) || players > 15 || players < 0 || 
+    !isValidNumber(maxPlayers) || maxPlayers > 15 || maxPlayers < 0
   ) {
     return res.status(400).send("Invalid or missing query parameters.");
   }
@@ -89,7 +91,7 @@ export default async function handler(req, res) {
         fields: [
           {
             name: "Server Info",
-            value: `Place ID: ${placeId}`,
+            value: `Players: ${players}/${maxPlayers}`,
             inline: false,
           },
           {
@@ -131,7 +133,7 @@ export default async function handler(req, res) {
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
       await setTimeout(5000);
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
-      await setTimeout(4000);
+      await setTimeout(3000);
       await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
     } else {
       await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
