@@ -1,13 +1,1 @@
-{
-  "functions": {
-    "api/handler.js": {
-      "maxDuration": 25
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/webhook-worker",
-      "schedule": "*/1 * * * *"
-    }
-  ]
-}
+
