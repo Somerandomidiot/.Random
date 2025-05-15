@@ -1,3 +1,5 @@
+
+
 import { setTimeout } from "timers/promises";
 
 const AURA_TRACKER = new Map();
@@ -16,8 +18,8 @@ export default async function handler(req, res) {
     placeId,
     jobId,
     height,
-    Players,
-    MaxPlayers,
+    players,
+    maxPlayers,
   } = req.query;
 
   const isValidNumber = (val) => !isNaN(Number(val));
@@ -40,13 +42,9 @@ export default async function handler(req, res) {
   const curTime = Math.floor(Date.now() / 1000);
   const expiresUnix = Math.floor(Number(expire));
 
-  if (expiresUnix < curTime - 660 || expiresUnix > curTime + 660) {
-    return res.status(400).send("Invalid expire time");
-  }
-
-  if (BANNED_IPS.has(ip)) {
-    return res.status(403).send("Your IP has been temporarily blocked");
-  }
+  // if (BANNED_IPS.has(ip)) {
+//     return res.status(403).send("Your IP has been temporarily blocked");
+//   }
 
   const isAura = name.toLowerCase().includes("aura");
   const jobKey = `${ip}_${jobId}`;
@@ -60,8 +58,8 @@ export default async function handler(req, res) {
 
     const count = IP_REQUEST_COUNT.get(ip) || 0;
     if (count >= 5) {
-      BANNED_IPS.add(ip);
-      return res.status(403).send("Too many Aura reports. You have been banned.");
+      // BANNED_IPS.add(ip);
+//       return res.status(403).send("Too many Aura reports. You have been banned.");
     }
     IP_REQUEST_COUNT.set(ip, count + 1);
   }
@@ -125,29 +123,25 @@ export default async function handler(req, res) {
     X25EGG: process.env.X25EGG,
   };
 
-try {
-  const webhookTag = determineWebhookTag(name, luckMulti);
-  console.log("Determined webhook tag:", webhookTag);
+  try {
+    const webhookTag = determineWebhookTag(name, luckMulti);
+    if (!webhookTag) return res.status(400).send("Unknown type or luck value");
 
-  if (!webhookTag) return res.status(400).send("Unknown type or luck value");
+    if (webhookTag === "AURA_EGG") {
+      await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
+      await setTimeout(5000);
+      await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
+      await setTimeout(3000);
+      await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
+    } else {
+      await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
+    }
 
-  if (webhookTag === "AURA_EGG_PRIORITY") {
-    console.log("Sending priority webhooks...");
-    await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P1, embed);
-    await setTimeout(5000);
-    await sendWebhook(TAG_WEBHOOKS.AURA_EGG_P2, embed);
-  } else if (webhookTag === "AURA_EGG") {
-    console.log("Sending normal Aura Egg webhook...");
-    await sendWebhook(TAG_WEBHOOKS.AURA_EGG, embed);
-  } else {
-    console.log("Sending other webhook:", TAG_WEBHOOKS[webhookTag]);
-    await sendWebhook(TAG_WEBHOOKS[webhookTag], embed);
+    return res.status(200).send(`Webhook sent to: ${webhookTag}`);
+  } catch (err) {
+    console.error("Webhook error:", err);
+    return res.status(500).send("Internal Server Error");
   }
-
-  return res.status(200).send(`Webhook sent to: ${webhookTag}`);
-} catch (err) {
-  console.error("Webhook error:", err);
-  return res.status(500).send("Internal Server Error");
 }
 
 async function sendWebhook(url, payload) {
@@ -169,14 +163,11 @@ function getDescription(name) {
   return "A Rare Object Has Been Found!";
 }
 
-function determineWebhookTag(name) {
+function determineWebhookTag(name, luckMulti) {
   const lower = name.toLowerCase();
-
-  if (lower === "auraeggp") return "AURA_EGG_PRIORITY";
-  if (lower === "auraegg") return "AURA_EGG";
-  if (lower.includes("royal")) return "ROYAL_CHEST";
-  if (lower.includes("egg") && name.includes("25")) return "X25EGG";
-
+  if (lower.includes("aura")) return "AURA_EGG";
+  if (lower.includes("royal") || lower.includes("dice")) return "ROYAL_CHEST";
+  if (luckMulti === 25) return "X25EGG";
+  if (lower.includes("auraeggp")) return "AURA_EGG_P";
   return null;
 }
-
